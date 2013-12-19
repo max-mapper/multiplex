@@ -1,5 +1,5 @@
 {
-  "name": "multiplexer",
+  "name": "multiplex",
   "version": "0.0.1",
   "description": "A binary stream multiplexer. Stream multiple streams of binary data over a single binary stream.",
   "main": "index.js",
