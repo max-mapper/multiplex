@@ -4,11 +4,12 @@ var through = require('through2')
 var varint = require('varint')
 var combiner = require('stream-combiner')
 
-module.exports = MDM
+module.exports = Multiplex
 
-function MDM(onStream) {
-  if (!(this instanceof MDM)) return new MDM(onStream)
+function Multiplex(onStream) {
+  if (!(this instanceof Multiplex)) return new Multiplex(onStream)
   var self = this
+  
   this.idx = 0
   this.streams = {}
   
@@ -43,12 +44,15 @@ function MDM(onStream) {
   function createStream(id) {
     if (typeof id !== 'undefined') self.idx = id + 1
     else id = self.idx++
+    
     var encoder = self.streams[id] = through(encode)
     var varid = varint.encode(id)
     
     function encode(chunk, encoding, next) {
       var mbuff = multibuffer.encode(chunk, varid.length)
+      
       for (var i = 0; i < varid.length; i++) mbuff[i] = varid[i]
+      
       writer.write(mbuff)
       next()
     }
