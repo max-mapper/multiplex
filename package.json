@@ -11,7 +11,6 @@
   "dependencies": {
     "varint": "~1.0.0",
     "multibuffer-stream": "~2.1.0",
-    "stream-combiner": "~0.0.4",
     "through2": "~0.2.3",
     "multibuffer": "~2.2.0"
   },

@@ -2,7 +2,6 @@ var multibuffer = require('multibuffer')
 var mbs = require('multibuffer-stream')
 var through = require('through2')
 var varint = require('varint')
-var combiner = require('stream-combiner')
 
 module.exports = Multiplex
 
@@ -24,21 +23,21 @@ function Multiplex(onStream) {
   })
 
   var decodeStream = through(decode)
-  var decoder = combiner(decodeStream, mbs.unpackStream(), writer)
   
   function decode(chunk, encoding, next) {
     var vi = varint.decode(chunk)
-    var rest = chunk.slice(varint.bytesRead)
+    var rest = chunk.slice(varint.decode.bytesRead)
     createOrPush(vi, rest)
     next()
   }
   
   function createOrPush(id, chunk) {
-    if (Object.keys(self.streams).indexOf(id) === -1) {
+    if (Object.keys(self.streams).indexOf(id + '') === -1) {
       var created = createStream(id)
       if (onStream) onStream(created, id)
     }
-    self.streams[id].push(chunk)
+    var unpacked = multibuffer.unpack(chunk)
+    self.streams[id].push(unpacked[0])
   }
   
   function createStream(id) {
