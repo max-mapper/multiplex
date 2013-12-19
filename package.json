@@ -1,6 +1,6 @@
 {
   "name": "multiplex",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A binary stream multiplexer. Stream multiple streams of binary data over a single binary stream.",
   "main": "index.js",
   "scripts": {
@@ -10,11 +10,13 @@
   "license": "BSD 2-Clause",
   "dependencies": {
     "varint": "~1.0.0",
-    "multibuffer-stream": "~2.1.0",
     "through2": "~0.2.3",
     "multibuffer": "~2.2.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "tape": "~2.3.2",
+    "concat-stream": "~1.2.1"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/maxogden/multiplex.git"

@@ -1,5 +1,4 @@
 var multibuffer = require('multibuffer')
-var mbs = require('multibuffer-stream')
 var through = require('through2')
 var varint = require('varint')
 
@@ -36,6 +35,7 @@ function Multiplex(onStream) {
       var created = createStream(id)
       if (onStream) onStream(created, id)
     }
+    if (chunk.length === 0) return self.streams[id].end()
     var unpacked = multibuffer.unpack(chunk)
     self.streams[id].push(unpacked[0])
   }
@@ -44,7 +44,7 @@ function Multiplex(onStream) {
     if (typeof id !== 'undefined') self.idx = id + 1
     else id = self.idx++
     
-    var encoder = self.streams[id] = through(encode)
+    var encoder = self.streams[id] = through(encode, onEnd)
     var varid = varint.encode(id)
     
     function encode(chunk, encoding, next) {
@@ -54,6 +54,12 @@ function Multiplex(onStream) {
       
       writer.write(mbuff)
       next()
+    }
+    
+    function onEnd(done) {
+      var endBuff = new Buffer(varid)
+      writer.write(endBuff)
+      done()
     }
     
     return encoder
