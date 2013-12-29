@@ -73,3 +73,21 @@ test('two way piping works with 2 sub-streams', function(t) {
     })
   }
 })
+
+test('stream id should be exposed as stream.meta', function(t) {
+  var plex1 = multiplex()
+  var stream1 = plex1.createStream(5)
+  t.equal(stream1.meta, 5)
+  
+  var plex2 = multiplex(function onStream(stream, id) {
+    t.equal(stream.meta, 5)
+    t.equal(id, 5)
+    t.end()
+  })
+
+  plex1.pipe(plex2)
+
+  stream1.write(new Buffer('hello'))
+  stream1.end()
+})
+

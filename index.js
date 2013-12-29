@@ -33,6 +33,7 @@ function Multiplex(onStream) {
   function createOrPush(id, chunk) {
     if (Object.keys(self.streams).indexOf(id + '') === -1) {
       var created = createStream(id)
+      created.meta = id
       if (onStream) onStream(created, id)
     }
     if (chunk.length === 0) return self.streams[id].end()
@@ -62,6 +63,7 @@ function Multiplex(onStream) {
       done()
     }
     
+    encoder.meta = id
     return encoder
   }
   
