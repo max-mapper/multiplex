@@ -91,3 +91,20 @@ test('stream id should be exposed as stream.meta', function(t) {
   stream1.end()
 })
 
+test('error: true', function(t) {
+  var plex1 = multiplex({ error: true })
+  var stream1 = plex1.createStream()
+  
+  var plex2 = multiplex(function onStream(stream, id) {
+    stream.on('error', function(err) {
+      t.equal(err.message, '0 had an error')
+      t.end()
+    })
+  })
+
+  plex1.pipe(plex2)
+
+  stream1.write(new Buffer('hello'))
+  stream1.emit('error', new Error('0 had an error'))
+})
+
