@@ -14,7 +14,7 @@ Returns a new multiplexer. You can use this to create sub-streams. All data writ
 
 ### `multiplex.createStream([id])`
 
-Creates a new sub-stream with an optional whole integer `id` (default is to use a autoincrementing integer). 
+Creates a new sub-stream with an optional whole string `id` (default is to use a autoincrementing integer). 
 
 Sub-streams are duplex streams.
 

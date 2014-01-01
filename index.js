@@ -6,13 +6,16 @@ module.exports = Multiplex
 
 var dataVal = new Buffer('d')[0]
 var errorVal = new Buffer('e')[0]
+var empty = new Buffer(0)
 
 function Multiplex(opts, onStream) {
   if (!(this instanceof Multiplex)) return new Multiplex(opts, onStream)
+  
   if (typeof opts === 'function') {
     onStream = opts
     opts = {}
   }
+  
   if (!opts) {
     opts = {}
   }
@@ -37,17 +40,20 @@ function Multiplex(opts, onStream) {
   function decode(chunk, encoding, next) {
     var type = chunk[0]
     chunk = chunk.slice(1)
-    var vi = varint.decode(chunk)
-    var rest = chunk.slice(varint.decode.bytesRead + 1)
-    createOrPush(vi, rest, type)
+    var parts = multibuffer.readPartial(chunk)
+    var id = parts[0]
+    parts = multibuffer.readPartial(parts[1])
+    var data = parts[0]
+    if (!data) data = empty
+    createOrPush(id, data, type)
     next()
   }
   
   function createOrPush(id, chunk, type) {
     if (Object.keys(self.streams).indexOf(id + '') === -1) {
       var created = createStream(id)
-      created.meta = id
-      if (onStream) onStream(created, id)
+      created.meta = id.toString()
+      if (onStream) onStream(created, created.meta)
     }
     if (chunk.length === 0) return self.streams[id].end()
     if (type === dataVal) self.streams[id].push(chunk)
@@ -55,11 +61,10 @@ function Multiplex(opts, onStream) {
   }
   
   function createStream(id) {
-    if (typeof id !== 'undefined') self.idx = id + 1
-    else id = self.idx++
-    
+    if (typeof id === 'undefined') id = ++self.idx
+    id = '' + id
     var encoder = self.streams[id] = through(onData, onEnd)
-    var varid = varint.encode(id)
+    var varid = varint.encode(id.length)
     
     if (opts.error) {
       encoder.on('error', function(e) {
@@ -70,10 +75,10 @@ function Multiplex(opts, onStream) {
     }
     
     function encode(chunk) {
-      // the +1 at the end is reserved for data type flag (e.g. d, e)
-      var mbuff = multibuffer.encode(chunk, varid.length + 1)
-      for (var i = 1; i < varid.length + 1; i++) mbuff[i] = varid[i - 1]
-      return mbuff
+      // the ', 1' reserves 1 byte at beginning of buffer for data type flag (e.g. d, e)
+      var metabuff = multibuffer.encode(new Buffer(id), 1)
+      var databuff = multibuffer.encode(chunk)
+      return Buffer.concat([metabuff, databuff])
     }
     
     function onData(chunk, encoding, next) {
@@ -84,13 +89,11 @@ function Multiplex(opts, onStream) {
     }
     
     function onEnd(done) {
-      var bytes = [dataVal].concat(varid)
-      var endBuff = new Buffer(bytes)
-      writer.write(endBuff)
+      writer.write(encode(empty))
       done()
     }
     
-    encoder.meta = id
+    encoder.meta = id.toString()
     return encoder
   }
   
