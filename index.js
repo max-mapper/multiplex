@@ -96,7 +96,12 @@ function Multiplex(opts, onStream) {
     encoder.meta = id.toString()
     return encoder
   }
+
+  function destroyStream(id) {
+    delete self.streams[id]
+  }
   
   reader.createStream = createStream
+  reader.destroyStream = destroyStream
   return reader
 }
