@@ -37,3 +37,20 @@ plex1.pipe(plex2)
 stream1.write(new Buffer('stream one!'))
 stream2.write(new Buffer('stream two!'))
 ```
+
+### contributing
+
+multiplex is an **OPEN Open Source Project**. This means that:
+
+> Individuals making significant and valuable contributions are given commit-access to the project to contribute as they see fit. This project is more like an open wiki than a standard guarded open source project.
+
+See the [CONTRIBUTING.md](contributing.md) file for more details.
+
+### contributors
+
+multiplex is only possible due to the excellent work of the following contributors:
+
+<table><tbody>
+<tr><th align="left">Max Ogden</th><td><a href="https://github.com/maxogden">GitHub/maxogden</a></td><td><a href="http://twitter.com/maxogden">Twitter/@maxogden</a></td></tr>
+<tr><th align="left">Ayman Mackouly</th><td><a href="https://github.com/1N50MN14/">GitHub/1N50MN14</a></td><td></td></tr>
+</tbody></table>

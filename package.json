@@ -6,6 +6,10 @@
   "scripts": {
     "test": "node test.js"
   },
+  "contributors": [
+    "Max Ogden <max@maxogden.com> (https://github.com/maxogden)",
+    "Ayman Mackouly <ayman.mackouly@gmail.com> (https://github.com/1N50MN14/)",
+  ],
   "author": "max ogden",
   "license": "BSD 2-Clause",
   "dependencies": {
