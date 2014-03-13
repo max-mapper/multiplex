@@ -1,6 +1,6 @@
 {
   "name": "multiplex",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A binary stream multiplexer. Stream multiple streams of binary data over a single binary stream.",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "contributors": [
     "Max Ogden <max@maxogden.com> (https://github.com/maxogden)",
-    "Ayman Mackouly <ayman.mackouly@gmail.com> (https://github.com/1N50MN14/)",
+    "Ayman Mackouly <ayman.mackouly@gmail.com> (https://github.com/1N50MN14/)"
   ],
   "author": "max ogden",
   "license": "BSD 2-Clause",
