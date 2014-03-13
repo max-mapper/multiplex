@@ -8,19 +8,19 @@ var dataVal = new Buffer('d')[0]
 var errorVal = new Buffer('e')[0]
 var empty = new Buffer(0)
 
-function Multiplex(opts, onStream) {
-  if (!(this instanceof Multiplex)) return new Multiplex(opts, onStream)
+function Multiplex(opts, onStream, onFormatErr) {
+  if (!(this instanceof Multiplex)) return new Multiplex(opts, onStream, onFormatErr)
   
-  if (typeof opts === 'function') {
-    onStream = opts
-    opts = {}
-  }
-  
-  if (!opts) {
+  var self = this
+  var args = [].slice.call(arguments)
+
+  if (typeof args[0] === 'function') {
+    onStream = args[0]
+    onFormatErr = args[1] || null
     opts = {}
   }
 
-  var self = this
+  opts = opts || {}  
   
   this.idx = 0
   this.streams = {}
@@ -50,6 +50,10 @@ function Multiplex(opts, onStream) {
   }
   
   function createOrPush(id, chunk, type) {
+    if (id === null) {
+      onFormatErr && onFormatErr()
+      return
+    }    
     if (Object.keys(self.streams).indexOf(id + '') === -1) {
       var created = createStream(id)
       created.meta = id.toString()
