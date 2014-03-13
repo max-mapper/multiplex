@@ -8,20 +8,20 @@ var dataVal = new Buffer('d')[0]
 var errorVal = new Buffer('e')[0]
 var empty = new Buffer(0)
 
-function Multiplex(opts, onStream, onFormatErr) {
-  if (!(this instanceof Multiplex)) return new Multiplex(opts, onStream, onFormatErr)
-  
-  var self = this
-  var args = [].slice.call(arguments)
+function Multiplex(opts, onStream) {
+  if (!(this instanceof Multiplex)) return new Multiplex(opts, onStream)  
 
-  if (typeof args[0] === 'function') {
-    onStream = args[0]
-    onFormatErr = args[1] || null
+  if (typeof opts === 'function') {
+    onStream = opts
+    opts = {}
+  }
+  
+  if (!opts) {
     opts = {}
   }
 
-  opts = opts || {}  
-  
+  var self = this
+
   this.idx = 0
   this.streams = {}
   
@@ -50,14 +50,11 @@ function Multiplex(opts, onStream, onFormatErr) {
   }
   
   function createOrPush(id, chunk, type) {
-    if (id === null) {
-      onFormatErr && onFormatErr()
-      return
-    }    
+    if (null === id && onStream) return onStream(new Error('Invalid data'))
     if (Object.keys(self.streams).indexOf(id + '') === -1) {
       var created = createStream(id)
       created.meta = id.toString()
-      if (onStream) onStream(created, created.meta)
+      if (onStream) onStream(null, created, created.meta)
     }
     if (chunk.length === 0) return self.streams[id].end()
     if (type === dataVal) self.streams[id].push(chunk)
