@@ -18,6 +18,20 @@ Creates a new sub-stream with an optional whole string `id` (default is to use a
 
 Sub-streams are duplex streams.
 
+### `multiplex.destroyStream(id)`
+
+Removes sub-stream, `id` is mandatory.
+
+## events
+
+### `multiplex.on('error', function (err) {})`
+
+Emitted when a sub-stream is unrecognized (decoding of data yields an `id` that is `null`)
+
+### `stream.on('error', function (err) {})`
+
+Emitted when encoding of data fails (opts.error must be set to true)
+
 ### example
 
 ```js
