@@ -49,16 +49,16 @@ function Multiplex(opts, onStream) {
     next()
   }
   
-  function createOrPush(id, chunk, type) {
-    if (null === id && onStream) return onStream(new Error('Invalid data'))
+  function createOrPush(id, chunk, type) {        
+    if (null === id) return reader.emit('error', new Error('Invalid data'))
     if (Object.keys(self.streams).indexOf(id + '') === -1) {
       var created = createStream(id)
       created.meta = id.toString()
-      if (onStream) onStream(null, created, created.meta)
+      onStream && onStream(created, created.meta)
     }
     if (chunk.length === 0) return self.streams[id].end()
-    if (type === dataVal) self.streams[id].push(chunk)
-    if (type === errorVal) self.streams[id].emit('error', new Error(chunk.toString()))
+    dataVal === type && self.streams[id].push(chunk)
+    errorVal === type && self.streams[id].emit('error', new Error(chunk.toString()))
   }
   
   function createStream(id) {
@@ -68,7 +68,7 @@ function Multiplex(opts, onStream) {
     var varid = varint.encode(id.length)
     
     if (opts.error) {
-      encoder.on('error', function(e) {
+      encoder.on('error', function(e) {        
         var mbuff = encode(new Buffer(e.message))
         mbuff[0] = errorVal
         writer.write(mbuff)
