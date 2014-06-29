@@ -140,3 +140,19 @@ test('testing invalid data error', function(t) {
   // a really stupid thing to do  
   s.pipe(plex2)
 })
+
+test('2 buffers packed into 1 chunk', function (t) {
+  var plex1 = multiplex()
+  var plex2 = multiplex()
+  var a = plex1.createStream(1337)
+  var b = plex2.createStream(1337)
+  a.write('abc\n');
+  a.write('123\n');
+  a.end()
+
+  b.pipe(concat(function (body) {
+    t.equal(body.toString('utf8'), 'abc\n123\n')
+    t.end()
+  }))
+  plex1.pipe(plex2)
+});
