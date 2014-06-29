@@ -46,7 +46,11 @@ function Multiplex(opts, onStream) {
     var data = parts[0]
     if (!data) data = empty
     createOrPush(id, data, type)
-    next()
+
+    for (var i = 1; i < parts.length; i++) {
+      if (parts[i] && parts[i].length) decode(parts[i], encoding)
+    }
+    if (next) next()
   }
   
   function createOrPush(id, chunk, type) {        
