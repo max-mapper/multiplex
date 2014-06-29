@@ -154,5 +154,15 @@ test('2 buffers packed into 1 chunk', function (t) {
     t.equal(body.toString('utf8'), 'abc\n123\n')
     t.end()
   }))
-  plex1.pipe(plex2)
+ 
+  var chunks = []
+  setTimeout(function () {
+    smoosh.push(Buffer.concat(chunks))
+    smoosh.push(null)
+  }, 100)
+  var smoosh = through(function (buf, enc, next) {
+    chunks.push(buf)
+  }, function () {})
+ 
+  plex1.pipe(through()).pipe(plex2)
 });
