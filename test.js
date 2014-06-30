@@ -3,6 +3,7 @@ var concat = require('concat-stream')
 var through = require('through2')
 var multiplex = require('./')
 var streamifier = require('streamifier')
+var net = require('net')
 
 test('one way piping work with 2 sub-streams', function(t) {
   var plex1 = multiplex()
@@ -140,3 +141,28 @@ test('testing invalid data error', function(t) {
   // a really stupid thing to do  
   s.pipe(plex2)
 })
+
+test('2 buffers packed into 1 chunk', function (t) {
+  var plex1 = multiplex()
+  var plex2 = multiplex()
+  var a = plex1.createStream(1337)
+  var b = plex2.createStream(1337)
+  a.write('abc\n');
+  a.write('123\n');
+  a.end()
+
+  b.pipe(concat(function (body) {
+    t.equal(body.toString('utf8'), 'abc\n123\n')
+    t.end()
+    server.close()
+    plex1.end()
+  }))
+ 
+  var server = net.createServer(function (stream) {
+    plex2.pipe(stream).pipe(plex2)
+  })
+  server.listen(0, function () {
+    var port = server.address().port
+    plex1.pipe(net.connect(port)).pipe(plex1)
+  })
+});
