@@ -1,6 +1,6 @@
 {
   "name": "multiplex",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A binary stream multiplexer. Stream multiple streams of binary data over a single binary stream.",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,9 @@
   "author": "max ogden",
   "license": "BSD 2-Clause",
   "dependencies": {
-    "varint": "~1.0.0",
-    "through2": "~0.2.3",
-    "multibuffer": "~2.2.0"
+    "multibuffer": "~2.2.0",
+    "through2": "^0.5.1",
+    "varint": "~1.0.0"
   },
   "devDependencies": {
     "tape": "~2.3.2",
