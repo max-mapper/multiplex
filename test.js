@@ -131,7 +131,7 @@ test('error: true', function(t) {
 
 test('testing invalid data error', function(t) {
   var plex2 = multiplex()
-  var s = streamifier.createReadStream("abc")
+  var s = streamifier.createReadStream(Array(5000).join('a'))
 
   plex2.on('error', function(err){    
     if (err) {
