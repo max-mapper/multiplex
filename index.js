@@ -36,13 +36,25 @@ function Multiplex(opts, onStream) {
   })
 
   var decodeStream = through(decode)
+  var pending = null
   
   function decode(chunk, encoding, next) {
+    if (pending) {
+      chunk = Buffer.concat([ pending, chunk ])
+      pending = null
+    }
     var type = chunk[0]
-    chunk = chunk.slice(1)
-    var parts = multibuffer.readPartial(chunk)
+    var parts = multibuffer.readPartial(chunk.slice(1))
+    if (parts[0] === null) {
+      pending = chunk
+      return next && next()
+    }
     var id = parts[0]
     parts = multibuffer.readPartial(parts[1])
+    if (parts[0] === null) {
+      pending = chunk
+      return next && next()
+    }
     var data = parts[0]
     if (!data) data = empty
     createOrPush(id, data, type)
