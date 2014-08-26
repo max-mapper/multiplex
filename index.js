@@ -24,6 +24,7 @@ function Multiplex(opts, onStream) {
 
   this.idx = 0
   this.streams = {}
+  this.maxDepth = opts.maxDepth === undefined ? 20 : opts.maxDepth
   
   var reader = through(function(chunk, encoding, next) {
     decodeStream.write(chunk)
@@ -39,7 +40,7 @@ function Multiplex(opts, onStream) {
   var pending = null
   
   function decode(chunk, encoding, next, depth) {
-    if (depth > 2) {
+    if (depth > self.maxDepth) {
       reader.emit('error', new Error('Invalid data'))
       return
     }
