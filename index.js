@@ -38,7 +38,11 @@ function Multiplex(opts, onStream) {
   var decodeStream = through(decode)
   var pending = null
   
-  function decode(chunk, encoding, next) {
+  function decode(chunk, encoding, next, depth) {
+    if (depth > 2) {
+      reader.emit('error', new Error('Invalid data'))
+      return
+    }
     if (pending) {
       chunk = Buffer.concat([ pending, chunk ])
       pending = null
@@ -64,7 +68,9 @@ function Multiplex(opts, onStream) {
     createOrPush(id, data, type)
 
     for (var i = 1; i < parts.length; i++) {
-      if (parts[i] && parts[i].length) decode(parts[i], encoding)
+      if (parts[i] && parts[i].length) {
+        decode(parts[i], encoding, null, (depth || 0) + 1)
+      }
     }
     if (next) next()
   }

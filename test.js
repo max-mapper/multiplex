@@ -143,6 +143,20 @@ test('testing invalid data error', function(t) {
   s.pipe(plex2)
 })
 
+test('overflow', function(t) {
+  var plex2 = multiplex()
+  var s = streamifier.createReadStream("abc")
+
+  plex2.on('error', function(err){    
+    if (err) {
+      t.equal(err.message, 'Invalid data')
+      t.end()
+    }
+  })
+  //write more than the high water mark
+  plex2.write(Array(5000).join('\xff'))
+})
+
 test('2 buffers packed into 1 chunk', function (t) {
   var plex1 = multiplex()
   var plex2 = multiplex()
