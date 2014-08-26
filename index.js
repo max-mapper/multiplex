@@ -24,7 +24,7 @@ function Multiplex(opts, onStream) {
 
   this.idx = 0
   this.streams = {}
-  this.maxDepth = opts.maxDepth === undefined ? 20 : opts.maxDepth
+  this.maxDepth = opts.maxDepth === undefined ? 100 : opts.maxDepth
   
   var reader = through(function(chunk, encoding, next) {
     decodeStream.write(chunk)

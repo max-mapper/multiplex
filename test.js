@@ -131,7 +131,7 @@ test('error: true', function(t) {
 
 test('testing invalid data error', function(t) {
   var plex2 = multiplex()
-  var s = streamifier.createReadStream(Array(5000).join('a'))
+  var s = streamifier.createReadStream(Array(50000).join('a'))
 
   plex2.on('error', function(err){    
     if (err) {
@@ -154,7 +154,7 @@ test('overflow', function(t) {
     }
   })
   //write more than the high water mark
-  plex2.write(Array(5000).join('\xff'))
+  plex2.write(Array(50000).join('\xff'))
 })
 
 test('2 buffers packed into 1 chunk', function (t) {
