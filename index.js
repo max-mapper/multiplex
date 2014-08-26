@@ -49,6 +49,10 @@ function Multiplex(opts, onStream) {
       pending = chunk
       return next && next()
     }
+    if (!parts[1]) {
+      pending = chunk
+      return next && next()
+    }
     var id = parts[0]
     parts = multibuffer.readPartial(parts[1])
     if (parts[0] === null) {
