@@ -24,6 +24,7 @@ function Multiplex(opts, onStream) {
 
   this.idx = 0
   this.streams = {}
+  this.maxDepth = opts.maxDepth === undefined ? 100 : opts.maxDepth
   
   var reader = through(function(chunk, encoding, next) {
     decodeStream.write(chunk)
@@ -36,19 +37,41 @@ function Multiplex(opts, onStream) {
   })
 
   var decodeStream = through(decode)
+  var pending = null
   
-  function decode(chunk, encoding, next) {
+  function decode(chunk, encoding, next, depth) {
+    if (depth > self.maxDepth) {
+      reader.emit('error', new Error('Invalid data'))
+      return
+    }
+    if (pending) {
+      chunk = Buffer.concat([ pending, chunk ])
+      pending = null
+    }
     var type = chunk[0]
-    chunk = chunk.slice(1)
-    var parts = multibuffer.readPartial(chunk)
+    var parts = multibuffer.readPartial(chunk.slice(1))
+    if (parts[0] === null) {
+      pending = chunk
+      return next && next()
+    }
+    if (!parts[1]) {
+      pending = chunk
+      return next && next()
+    }
     var id = parts[0]
     parts = multibuffer.readPartial(parts[1])
+    if (parts[0] === null) {
+      pending = chunk
+      return next && next()
+    }
     var data = parts[0]
     if (!data) data = empty
     createOrPush(id, data, type)
 
     for (var i = 1; i < parts.length; i++) {
-      if (parts[i] && parts[i].length) decode(parts[i], encoding)
+      if (parts[i] && parts[i].length) {
+        decode(parts[i], encoding, null, (depth || 0) + 1)
+      }
     }
     if (next) next()
   }
