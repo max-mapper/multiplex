@@ -84,7 +84,7 @@ function Multiplex(opts, onStream) {
       onStream && onStream(created, created.meta)
     }
     if (chunk.length === 0) return self.streams[id].end()
-    dataVal === type && self.streams[id].push(chunk)
+    else if (dataVal === type) self.streams[id].push(chunk)
     errorVal === type && self.streams[id].emit('error', new Error(chunk.toString()))
   }
   
