@@ -83,7 +83,7 @@ function Multiplex(opts, onStream) {
       created.meta = id.toString()
       onStream && onStream(created, created.meta)
     }
-    if (chunk.length === 0) return self.streams[id].end()
+    if (chunk.length === 0) return destroyStream(id + '')
     dataVal === type && self.streams[id].push(chunk)
     errorVal === type && self.streams[id].emit('error', new Error(chunk.toString()))
   }
@@ -126,6 +126,7 @@ function Multiplex(opts, onStream) {
   }
 
   function destroyStream(id) {
+    self.streams[id].end()
     delete self.streams[id]
   }
   
