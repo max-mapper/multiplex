@@ -226,3 +226,25 @@ test('chunks', function(t) {
     }
   }
 })
+
+test('destroyStream', function(t) {
+  t.plan(2)
+
+  var plex1 = multiplex()
+  var plex2 = multiplex(function(rs, id) {
+    rs.on('data', function() {})
+    rs.on('end', function() {
+      t.ok(1, 'plex2 saw readStream end')
+    })
+  })
+
+  plex1.pipe(plex2)
+  
+  var ws = plex1.createStream()
+  ws.on('finish', function() {
+    t.ok(1, 'writeStream saw self finish')
+  })
+
+  ws.write('hello')
+  plex1.destroyStream(ws.meta)
+})
