@@ -117,7 +117,9 @@ function Multiplex(opts, onStream) {
     }
     
     function onEnd(done) {
-      writer.write(encode(empty))
+      if (!self.ended) {
+        writer.write(encode(empty))
+      }
       done()
     }
     
@@ -129,6 +131,17 @@ function Multiplex(opts, onStream) {
     self.streams[id].end()
     delete self.streams[id]
   }
+
+  function destroyAll() {
+    for (var id in self.streams) {
+      destroyStream(id)
+    }
+  }
+
+  reader.on('finish', function() {
+    self.ended = true
+    destroyAll()
+  })
   
   reader.createStream = createStream
   reader.destroyStream = destroyStream
