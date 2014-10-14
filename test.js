@@ -269,3 +269,35 @@ test('cleanup on end', function(t) {
     if (alive2) ws2.write('world')
   })
 })
+
+test('discard data pushed to ended sub-streams', function(t) {
+  var plex1 = multiplex();
+  var plex2 = multiplex(function(rs) {
+    rs.pipe(through(function(c, enc, cb) {
+      cb(null, c)
+    }))
+
+    setTimeout(function() {
+      goslow = true
+      rs.end()
+    }, 100)
+  })
+
+  var goslow = false
+  var latency = through(function(c, enc, cb) {
+    setTimeout(function() {
+      cb(null, c)
+    }, (goslow ? 100 : 0))
+  })
+
+  plex1.pipe(plex2).pipe(latency).pipe(plex1)
+
+  var ws = plex1.createStream()
+  ws.on('finish', function() {
+    clearInterval(interval)
+    t.end()
+  })
+  var interval = setInterval(function() {
+    ws.write('hello')
+  }, 20)
+})
