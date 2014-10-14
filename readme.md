@@ -23,9 +23,9 @@ Creates a new sub-stream with an optional whole string `id` (default is to use a
 
 Sub-streams are duplex streams.
 
-### `multiplex.destroyStream(id)`
+### `multiplex.end()`
 
-Removes sub-stream, `id` is mandatory.
+End the multiplexer and all its sub-streams. You can also call `substream.end()` and the multiplexer will end the corresponding sub-stream on the other side.
 
 ## events
 
