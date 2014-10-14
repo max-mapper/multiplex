@@ -132,15 +132,11 @@ function Multiplex(opts, onStream) {
     delete self.streams[id]
   }
 
-  function destroyAll() {
+  reader.on('finish', function() {
+    self.ended = true
     for (var id in self.streams) {
       destroyStream(id)
     }
-  }
-
-  reader.on('finish', function() {
-    self.ended = true
-    destroyAll()
   })
   
   reader.createStream = createStream
