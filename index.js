@@ -144,6 +144,5 @@ function Multiplex(opts, onStream) {
   })
   
   reader.createStream = createStream
-  reader.destroyStream = destroyStream
   return reader
 }
