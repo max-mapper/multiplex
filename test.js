@@ -226,3 +226,46 @@ test('chunks', function(t) {
     }
   }
 })
+
+test('cleanup on end', function(t) {
+  t.plan(4)
+
+  var plex1 = multiplex(function(rs, id) {
+    rs.pipe(through(function(c, enc, cb) {
+      cb(null, c)
+    }, function(cb) {
+      t.ok(1, 'plex1 saw readStream end')
+    }))
+  })
+  var plex2 = multiplex(function(rs, id) {
+    rs.pipe(through(function(c, enc, cb) {
+      cb(null, c)
+    }, function(cb) {
+      t.ok(1, 'plex2 saw readStream end')
+    }))
+  })
+
+  plex1.pipe(plex2).pipe(plex1)
+  
+  var ws1 = plex1.createStream(1)
+  var ws2 = plex2.createStream(2)
+  var alive1 = true
+  var alive2 = true
+
+  ws1.on('finish', function() {
+    alive1 = false
+    t.ok(1, 'writeStream1 saw self finish')
+  })
+  ws2.on('finish', function() {
+    alive2 = false
+    t.ok(1, 'writeStream2 saw self finish')
+  })
+
+  ws1.write('hello')
+  ws2.write('world')
+  process.nextTick(function() {
+    plex1.end()
+    if (alive1) ws1.write('hello')
+    if (alive2) ws2.write('world')
+  })
+})
