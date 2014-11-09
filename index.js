@@ -1,135 +1,131 @@
-var multibuffer = require('multibuffer')
+var protobuf = require('protocol-buffers')
+var duplexify = require('duplexify')
+var lpstream = require('length-prefixed-stream')
 var through = require('through2')
-var varint = require('varint')
+var fs = require('fs')
 
-module.exports = Multiplex
+var messages = protobuf(fs.readFileSync(__dirname+'/schema.proto'))
+var TYPE = messages.TYPE
 
-var dataVal = new Buffer('d')[0]
-var errorVal = new Buffer('e')[0]
-var empty = new Buffer(0)
+var multiplex = function(opts, onstream) {
+  if (typeof opts === 'function') return multiplex(null, opts)
+  if (!opts) opts = {}
 
-function Multiplex(opts, onStream) {
-  if (!(this instanceof Multiplex)) return new Multiplex(opts, onStream)  
+  var local = []
+  var remote = []
+  var encode = lpstream.encode()
+  var decode = lpstream.decode()
+  var dup = duplexify.obj(decode, encode)
 
-  if (typeof opts === 'function') {
-    onStream = opts
-    opts = {}
+  var addChannel = function(list, index, name) {
+    var stream = duplexify.obj()
+    var channel = list === remote ? 2*index+1 : 2*index
+
+    var readable = through.obj()
+    var writable = through.obj(function(data, enc, cb) {
+      if (typeof data === 'string') data = new Buffer(data)
+      encode.write(messages.Frame.encode({channel:channel, data:data, name:name}), cb)
+      name = null
+    })
+
+    var destroy = function(type, data) {
+      if (list[index] !== readable) return
+      encode.write(messages.Frame.encode({channel:channel, type:type, data:data, name:name}))
+      list[index] = null
+    }
+
+    list[index] = readable
+
+    stream.meta = name
+    stream.setReadable(readable)
+    stream.setWritable(writable)
+
+    var onerror = function(err) {
+      destroy(TYPE.ERROR, err && new Buffer(err.message))
+    }
+
+    readable.once('destroy', function(err) {
+      stream.removeListener('close', onerror)
+      stream.removeListener('error', onerror)
+      stream.destroy(err)
+    })
+
+    stream.on('close', onerror)
+    if (opts.error) stream.on('error', onerror)
+
+    writable.on('finish', function() {
+      destroy(TYPE.END)
+      readable.end()
+    })
+
+    return stream
   }
-  
-  if (!opts) {
-    opts = {}
+
+  var decodeFrame = function(data) {
+    try {
+      return messages.Frame.decode(data)
+    } catch (err) {
+      return null
+    }
   }
 
-  var self = this
+  var decoder = function(data, enc, cb) {
+    var frame = decodeFrame(data)
+    if (!frame) return dup.destroy(new Error('Invalid data'))
 
-  this.idx = 0
-  this.streams = {}
-  this.maxDepth = opts.maxDepth === undefined ? 100 : opts.maxDepth
-  
-  var reader = through(function(chunk, encoding, next) {
-    decodeStream.write(chunk)
-    next()
+    var channel = frame.channel
+    var reply = channel % 2 === 1
+    var index = reply ? (channel - 1) / 2 : channel / 2
+
+    if (!reply && !remote[index] && onstream) {
+      onstream(addChannel(remote, index, frame.name), frame.name || index)
+    }
+
+    var list = reply ? local : remote
+    var stream = list[index]
+
+    if (!stream) return cb()
+
+    switch (frame.type) {
+      case TYPE.DATA:
+      return stream.write(frame.data, cb)
+
+      case TYPE.END:
+      list[index] = null
+      stream.end()
+      return cb()
+
+      case TYPE.ERROR:
+      list[index] = null
+      stream.emit('destroy', frame.data && new Error(frame.data.toString()))
+      return cb()
+    }
+
+    cb()
+  }
+
+  decode.pipe(through.obj(decoder))
+
+  dup.on('close', function() {
+    local.concat(remote).forEach(function(readable) {
+      if (readable) readable.emit('destroy')
+    })
   })
-  
-  var writer = through(function(chunk, encoding, next) {
-    reader.push(chunk)
-    next()
+
+  dup.on('finish', function() {
+    local.concat(remote).forEach(function(readable) {
+      if (readable) readable.end()
+    })
+    encode.end()
   })
 
-  var decodeStream = through(decode)
-  var pending = null
-  
-  function decode(chunk, encoding, next, depth) {
-    if (depth > self.maxDepth) {
-      reader.emit('error', new Error('Invalid data'))
-      return
-    }
-    if (pending) {
-      chunk = Buffer.concat([ pending, chunk ])
-      pending = null
-    }
-    var type = chunk[0]
-    var parts = multibuffer.readPartial(chunk.slice(1))
-    if (parts[0] === null) {
-      pending = chunk
-      return next && next()
-    }
-    if (!parts[1]) {
-      pending = chunk
-      return next && next()
-    }
-    var id = parts[0]
-    parts = multibuffer.readPartial(parts[1])
-    if (parts[0] === null) {
-      pending = chunk
-      return next && next()
-    }
-    var data = parts[0]
-    if (!data) data = empty
-    createOrPush(id, data, type)
-
-    for (var i = 1; i < parts.length; i++) {
-      if (parts[i] && parts[i].length) {
-        decode(parts[i], encoding, null, (depth || 0) + 1)
-      }
-    }
-    if (next) next()
-  }
-  
-  function createOrPush(id, chunk, type) {        
-    if (null === id) return reader.emit('error', new Error('Invalid data'))
-    if (Object.keys(self.streams).indexOf(id + '') === -1) {
-      var created = createStream(id)
-      created.meta = id.toString()
-      onStream && onStream(created, created.meta)
-    }
-    if (chunk.length === 0) return self.streams[id].end()
-    dataVal === type && self.streams[id].push(chunk)
-    errorVal === type && self.streams[id].emit('error', new Error(chunk.toString()))
-  }
-  
-  function createStream(id) {
-    if (typeof id === 'undefined') id = ++self.idx
-    id = '' + id
-    var encoder = self.streams[id] = through(onData, onEnd)
-    var varid = varint.encode(id.length)
-    
-    if (opts.error) {
-      encoder.on('error', function(e) {        
-        var mbuff = encode(new Buffer(e.message))
-        mbuff[0] = errorVal
-        writer.write(mbuff)
-      })
-    }
-    
-    function encode(chunk) {
-      // the ', 1' reserves 1 byte at beginning of buffer for data type flag (e.g. d, e)
-      var metabuff = multibuffer.encode(new Buffer(id), 1)
-      var databuff = multibuffer.encode(chunk)
-      return Buffer.concat([metabuff, databuff])
-    }
-    
-    function onData(chunk, encoding, next) {
-      var mbuff = encode(chunk)
-      mbuff[0] = dataVal
-      writer.write(mbuff)
-      next()
-    }
-    
-    function onEnd(done) {
-      writer.write(encode(empty))
-      done()
-    }
-    
-    encoder.meta = id.toString()
-    return encoder
+  dup.createStream = function(name) {
+    var index = local.indexOf(null)
+    if (index === -1) index = local.push(null)-1
+    return addChannel(local, index, name && ''+name)
   }
 
-  function destroyStream(id) {
-    delete self.streams[id]
-  }
-  
-  reader.createStream = createStream
-  reader.destroyStream = destroyStream
-  return reader
+  return dup
 }
+
+module.exports = multiplex

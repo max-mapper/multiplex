@@ -143,35 +143,35 @@ test('testing invalid data error', function(t) {
   s.pipe(plex2)
 })
 
-test('overflow', function(t) {
-  var plex2 = multiplex()
-  var s = streamifier.createReadStream("abc")
+// test('overflow', function(t) {
+//   var plex2 = multiplex()
+//   var s = streamifier.createReadStream("abc")
 
-  plex2.on('error', function(err){    
-    if (err) {
-      t.equal(err.message, 'Invalid data')
-      t.end()
-    }
-  })
-  //write more than the high water mark
-  plex2.write(Array(50000).join('\xff'))
-})
+//   plex2.on('error', function(err){
+//     if (err) {
+//       t.equal(err.message, 'Invalid data')
+//       t.end()
+//     }
+//   })
+//   //write more than the high water mark
+//   plex2.write(Array(50000).join('\xff'))
+// })
 
 test('2 buffers packed into 1 chunk', function (t) {
   var plex1 = multiplex()
-  var plex2 = multiplex()
+  var plex2 = multiplex(function(b) {
+    b.pipe(concat(function (body) {
+      t.equal(body.toString('utf8'), 'abc\n123\n')
+      t.end()
+      server.close()
+      plex1.end()
+    }))
+  })
   var a = plex1.createStream(1337)
-  var b = plex2.createStream(1337)
   a.write('abc\n');
   a.write('123\n');
   a.end()
 
-  b.pipe(concat(function (body) {
-    t.equal(body.toString('utf8'), 'abc\n123\n')
-    t.end()
-    server.close()
-    plex1.end()
-  }))
  
   var server = net.createServer(function (stream) {
     plex2.pipe(stream).pipe(plex2)

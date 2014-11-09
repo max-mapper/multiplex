@@ -15,17 +15,12 @@ Returns a new multiplexer. You can use this to create sub-streams. All data writ
 You can optionally set:
 
 * `opts.error` - forward errors on individual streams
-* `opts.maxDepth` - maximum number of messages to recursively parse on the same chunk (default: 100)
 
 ### `multiplex.createStream([id])`
 
-Creates a new sub-stream with an optional whole string `id` (default is to use a autoincrementing integer). 
+Creates a new sub-stream with an optional whole string `id` (default is the stream channel id). 
 
 Sub-streams are duplex streams.
-
-### `multiplex.destroyStream(id)`
-
-Removes sub-stream, `id` is mandatory.
 
 ## events
 
