@@ -19,7 +19,7 @@ var multiplex = function(opts, onstream) {
 
   var addChannel = function(list, index, name) {
     var stream = duplexify.obj()
-    var channel = list === remote ? 2*index+1 : 2*index
+    var channel = list === remote ? -(index+1) : index+1
 
     var readable = through.obj()
     var writable = through.obj(function(data, enc, cb) {
@@ -74,8 +74,8 @@ var multiplex = function(opts, onstream) {
     if (!frame) return dup.destroy(new Error('Invalid data'))
 
     var channel = frame.channel
-    var reply = channel % 2 === 1
-    var index = reply ? (channel - 1) / 2 : channel / 2
+    var reply = channel < 0
+    var index = reply ? -channel-1 : channel-1
 
     if (!reply && !remote[index] && onstream) {
       onstream(addChannel(remote, index, frame.name), frame.name || index)
