@@ -15,10 +15,11 @@ Returns a new multiplexer. You can use this to create sub-streams. All data writ
 You can optionally set:
 
 * `opts.error` - forward errors on individual streams
+* `opts.lazy` - only open a channel when you start writing to it
 
 ### `multiplex.createStream([id])`
 
-Creates a new sub-stream with an optional whole string `id` (default is the stream channel id). 
+Creates a new sub-stream with an optional whole string `id` (default is the stream channel id).
 
 Sub-streams are duplex streams.
 

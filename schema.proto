@@ -2,6 +2,7 @@ enum TYPE {
   DATA = 1;
   END = 2;
   ERROR = 3;
+  OPEN = 4;
 }
 
 message Frame {

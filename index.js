@@ -16,8 +16,9 @@ var multiplex = function(opts, onstream) {
   var encode = lpstream.encode()
   var decode = lpstream.decode()
   var dup = duplexify.obj(decode, encode)
+  var lazy = opts.lazy
 
-  var addChannel = function(list, index, name) {
+  var addChannel = function(list, index, name, open) {
     var stream = duplexify.obj()
     var channel = list === remote ? -(index+1) : index+1
 
@@ -58,6 +59,11 @@ var multiplex = function(opts, onstream) {
       readable.end()
     })
 
+    if (open) {
+      encode.write(messages.Frame.encode({channel:channel, type:TYPE.OPEN, name:name}))
+      name = null
+    }
+
     return stream
   }
 
@@ -78,7 +84,7 @@ var multiplex = function(opts, onstream) {
     var index = reply ? -channel-1 : channel-1
 
     if (!reply && !remote[index] && onstream) {
-      onstream(addChannel(remote, index, frame.name), frame.name || index)
+      onstream(addChannel(remote, index, frame.name, false), frame.name || index)
     }
 
     var list = reply ? local : remote
@@ -87,6 +93,9 @@ var multiplex = function(opts, onstream) {
     if (!stream) return cb()
 
     switch (frame.type) {
+      case TYPE.OPEN:
+      return cb()
+
       case TYPE.DATA:
       return stream.write(frame.data, cb)
 
@@ -122,7 +131,7 @@ var multiplex = function(opts, onstream) {
   dup.createStream = function(name) {
     var index = local.indexOf(null)
     if (index === -1) index = local.push(null)-1
-    return addChannel(local, index, name && ''+name)
+    return addChannel(local, index, name && ''+name, !lazy)
   }
 
   return dup
