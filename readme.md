@@ -72,7 +72,8 @@ See the [CONTRIBUTING.md](contributing.md) file for more details.
 
 multiplex is only possible due to the excellent work of the following contributors:
 
-<table><tbody>
-<tr><th align="left">Max Ogden</th><td><a href="https://github.com/maxogden">GitHub/maxogden</a></td><td><a href="http://twitter.com/maxogden">Twitter/@maxogden</a></td></tr>
-<tr><th align="left">Ayman Mackouly</th><td><a href="https://github.com/1N50MN14/">GitHub/1N50MN14</a></td><td></td></tr>
+<table><tbody><tr><th align="left">maxogden</th><td><a href="https://github.com/maxogden">GitHub/maxogden</a></td></tr>
+<tr><th align="left">1N50MN14</th><td><a href="https://github.com/1N50MN14">GitHub/1N50MN14</a></td></tr>
+<tr><th align="left">substack</th><td><a href="https://github.com/substack">GitHub/substack</a></td></tr>
+<tr><th align="left">mafintosh</th><td><a href="https://github.com/mafintosh">GitHub/mafintosh</a></td></tr>
 </tbody></table>
