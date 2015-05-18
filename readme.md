@@ -6,11 +6,13 @@ A binary stream multiplexer. Stream multiple streams of binary data over a singl
 
 ## api
 
-### `var multiplex = require('multiplex')([defaultStreamOptions], [onStream])`
+### `var multiplex = require('multiplex')([options], [onStream])`
 
 Returns a new multiplexer. You can use this to create sub-streams. All data written to sub-streams will be emitted through this. If you pipe a multiplex instance to another multiplex instance all substream data will be multiplexed and demultiplexed on the other end.
 
 `onStream` will be called with `(stream, id)` whenever a new remote sub-stream is created with an id that hasn't already been created with `.createStream`.
+
+Any options pass in `options` are used as defaults options when creating sub streams.
 
 ### `stream = multiplex.createStream([id], [options])`
 
