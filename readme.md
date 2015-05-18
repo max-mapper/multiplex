@@ -6,22 +6,29 @@ A binary stream multiplexer. Stream multiple streams of binary data over a singl
 
 ## api
 
-### `var multiplex = require('multiplex')(opts, [onStream])`
+### `var multiplex = require('multiplex')([defaultStreamOptions], [onStream])`
 
 Returns a new multiplexer. You can use this to create sub-streams. All data written to sub-streams will be emitted through this. If you pipe a multiplex instance to another multiplex instance all substream data will be multiplexed and demultiplexed on the other end.
 
 `onStream` will be called with `(stream, id)` whenever a new remote sub-stream is created with an id that hasn't already been created with `.createStream`.
 
-You can optionally set:
-
-* `opts.error` - forward errors on individual streams
-* `opts.lazy` - only open a channel when you start writing to it
-
-### `multiplex.createStream([id])`
+### `stream = multiplex.createStream([id], [options])`
 
 Creates a new sub-stream with an optional whole string `id` (default is the stream channel id).
 
 Sub-streams are duplex streams.
+
+Options include:
+
+* `opts.chunked` - enables chunked mode on all streams (message framing not guaranteed)
+* `opts.halfOpen` - make channels support half open mode meaning that they can be readable but not writable and vice versa
+
+### `stream = multiplex.receiveStream(id, [options])`
+
+Explicitly receive an incoming stream.
+
+This is useful if you have a function that accepts an instance of multiplex
+and you want to receive a substream.
 
 ## events
 
@@ -31,7 +38,7 @@ Emitted when the outer stream encounters invalid data
 
 ### `stream.on('error', function (err) {})`
 
-Emitted when encoding of data fails (opts.error must be set to true)
+Emitted if the inner stream is destroyed with an error
 
 ### example
 
