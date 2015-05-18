@@ -262,12 +262,9 @@ Multiplex.prototype._push = function (data) {
   if (!stream) return
 
   switch (this._type) {
-    case 1: // local packet
-    case 2: // remote packet
-    if (!stream.push(data)) {
-      this._awaitChannelDrains++
-      stream._awaitDrain++
-    }
+    case 5: // local error
+    case 6: // remote error
+    stream._destroy(new Error(data.toString() || 'Channel destroyed'), false)
     return
 
     case 3: // local end
@@ -275,9 +272,12 @@ Multiplex.prototype._push = function (data) {
     stream.push(null)
     return
 
-    case 5: // local error
-    case 6: // remote error
-    stream._destroy(new Error(data.toString() || 'Channel destroyed'), false)
+    case 1: // local packet
+    case 2: // remote packet
+    if (!stream.push(data)) {
+      this._awaitChannelDrains++
+      stream._awaitDrain++
+    }
     return
   }
 }
