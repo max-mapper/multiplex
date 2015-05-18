@@ -314,7 +314,7 @@ Multiplex.prototype._clear = function () {
   this._remote = []
 
   list.forEach(function (stream) {
-    if (stream) stream.destroy()
+    if (stream) stream._destroy(null, false)
   })
 
   this.push(null)
