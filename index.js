@@ -106,12 +106,12 @@ var Multiplex = function (opts, onchannel) {
     opts = null
   }
 
+  this.destroyed = false
   this._options = opts || {}
   this._local = []
   this._remote = []
   this._list = this._local
   this._receiving = {}
-
   this._onchannel = onchannel
   this._chunked = false
   this._state = 0
