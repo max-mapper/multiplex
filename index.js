@@ -252,7 +252,7 @@ Multiplex.prototype._push = function (data) {
       delete this._receiving[name]
       this._addChannel(channel, this._channel, this._list)
     } else if (this._onchannel) {
-      channel = new Channel(name, this)
+      channel = new Channel(name, this, this._options)
       this._onchannel(this._addChannel(channel, this._channel, this._list), channel.name)
     }
     return
