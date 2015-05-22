@@ -1,6 +1,6 @@
 {
   "name": "multiplex",
-  "version": "6.0.4",
+  "version": "6.0.5",
   "description": "A binary stream multiplexer. Stream multiple streams of binary data over a single binary stream.",
   "main": "index.js",
   "scripts": {
