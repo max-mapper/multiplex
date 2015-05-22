@@ -29,6 +29,7 @@ var Channel = function (name, plex, opts) {
   var ended = false
 
   this.once('end', function () {
+    this._read() // trigger drain
     if (this.destroyed) return
     ended = true
     if (finished) this._finalize()
