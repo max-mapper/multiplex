@@ -3,6 +3,7 @@ var varint = require('varint')
 var events = require('events')
 var xtend = require('xtend')
 var util = require('util')
+var duplexify = require('duplexify')
 
 var empty = new Buffer(0)
 var pool = new Buffer(10 * 1024)
@@ -146,6 +147,10 @@ Multiplex.prototype.receiveStream = function (name, opts) {
   var channel = new Channel(name.toString(), this, xtend(this._options, opts))
   this._receiving[name] = channel
   return channel
+}
+
+Multiplex.prototype.createSharedStream = function (name, opts) {
+  return duplexify(this.receiveStream(name, opts), this.createStream(name, opts))
 }
 
 Multiplex.prototype._send = function (header, data) {

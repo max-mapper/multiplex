@@ -32,6 +32,11 @@ Explicitly receive an incoming stream.
 This is useful if you have a function that accepts an instance of multiplex
 and you want to receive a substream.
 
+### `stream = multiplex.createSharedStream(id, [options])`
+
+Create a shared stream. If both ends create a shared stream with
+the same id, writing data on one end will emit the same data on the other end
+
 ## events
 
 ### `multiplex.on('error', function (err) {})`
