@@ -25,6 +25,7 @@ var Channel = function (name, plex, opts) {
   this._dataHeader = 0
   this._opened = false
   this._awaitDrain = 0
+  this._lazy = !!opts.lazy
 
   var finished = false
   var ended = false
@@ -77,6 +78,8 @@ Channel.prototype._write = function (data, enc, cb) {
   }
   if (this.destroyed) return cb()
 
+  if (this._lazy && this.initiator) this._open()
+
   var drained = this._multiplex._send(this._dataHeader, data)
   if (drained) cb()
   else this._multiplex._ondrain.push(cb)
@@ -90,12 +93,17 @@ Channel.prototype._read = function () {
   }
 }
 
+Channel.prototype._open = function () {
+  this._lazy = false
+  this._multiplex._send(this.channel << 3 | 0, this.name !== this.channel.toString() ? new Buffer(this.name) : null)
+}
+
 Channel.prototype.open = function (channel, initiator) {
   this.channel = channel
   this.initiator = initiator
   this._dataHeader = channel << 3 | (initiator ? 2 : 1)
   this._opened = true
-  if (initiator) this._multiplex._send(channel << 3 | 0, this.name !== this.channel.toString() ? new Buffer(this.name) : null)
+  if (!this._lazy && this.initiator) this._open()
   this.emit('open')
 }
 
@@ -150,7 +158,7 @@ Multiplex.prototype.receiveStream = function (name, opts) {
 }
 
 Multiplex.prototype.createSharedStream = function (name, opts) {
-  return duplexify(this.receiveStream(name, opts), this.createStream(name, opts))
+  return duplexify(this.createStream(name, xtend(opts, {lazy: true})), this.receiveStream(name, opts))
 }
 
 Multiplex.prototype._send = function (header, data) {
