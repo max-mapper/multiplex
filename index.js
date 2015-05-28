@@ -43,6 +43,7 @@ var Channel = function (name, plex, opts) {
     if (!this._opened) {
       this.once('open', onfinish)
     } else {
+      if (this._lazy && this.initiator) this._open()
       this._multiplex._send(this.channel << 3 | (this.initiator ? 4 : 3), null)
       finished = true
       if (ended) this._finalize()
@@ -61,7 +62,10 @@ Channel.prototype._destroy = function (err, local) {
   this.destroyed = true
   if (err && (!local || events.listenerCount(this, 'error'))) this.emit('error', err)
   this.emit('close')
-  if (local && this._opened) this._multiplex._send(this.channel << 3 | (this.initiator ? 6 : 5), err ? new Buffer(err.message) : null)
+  if (local && this._opened) {
+    if (this._lazy && this.initiator) this._open()
+    this._multiplex._send(this.channel << 3 | (this.initiator ? 6 : 5), err ? new Buffer(err.message) : null)
+  }
   this._finalize()
 }
 
