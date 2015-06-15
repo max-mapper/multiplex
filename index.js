@@ -1,6 +1,6 @@
 var stream = require('readable-stream')
 var varint = require('varint')
-var events = require('events').EventEmitter
+var EventEmitter = require('events').EventEmitter
 var xtend = require('xtend')
 var util = require('util')
 var duplexify = require('duplexify')
@@ -60,7 +60,7 @@ Channel.prototype.destroy = function (err) {
 Channel.prototype._destroy = function (err, local) {
   if (this.destroyed) return
   this.destroyed = true
-  if (err && (!local || events.listenerCount(this, 'error'))) this.emit('error', err)
+  if (err && (!local || EventEmitter.listenerCount(this, 'error'))) this.emit('error', err)
   this.emit('close')
   if (local && this._opened) {
     if (this._lazy && this.initiator) this._open()
