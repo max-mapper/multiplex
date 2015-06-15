@@ -1,6 +1,6 @@
 var stream = require('readable-stream')
 var varint = require('varint')
-var events = require('events')
+var events = require('events').EventEmitter
 var xtend = require('xtend')
 var util = require('util')
 var duplexify = require('duplexify')
