@@ -60,7 +60,7 @@ Channel.prototype.destroy = function (err) {
 Channel.prototype._destroy = function (err, local) {
   if (this.destroyed) return
   this.destroyed = true
-  if (err && (!local || events.listenerCount(this, 'error'))) this.emit('error', err)
+  if (err && (!local || this.listeners('error').length)) this.emit('error', err)
   this.emit('close')
   if (local && this._opened) {
     if (this._lazy && this.initiator) this._open()
