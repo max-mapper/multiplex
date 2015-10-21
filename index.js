@@ -138,6 +138,7 @@ var Multiplex = function (opts, onchannel) {
   this._awaitChannelDrains = 0
   this._onwritedrain = null
   this._ondrain = []
+  this._finished = false
 
   this.on('finish', this._clear)
 }
@@ -260,7 +261,7 @@ Multiplex.prototype._push = function (data) {
   }
 
   if (this._type === 0) { // open
-    if (this.destroyed) return
+    if (this.destroyed || this._finished) return
 
     var name = data.toString() || this._channel.toString()
     var channel
@@ -309,6 +310,8 @@ Multiplex.prototype._onchanneldrain = function (drained) {
 }
 
 Multiplex.prototype._write = function (data, enc, cb) {
+  if (this._finished) return cb()
+
   var offset = 0
 
   while (offset < data.length) {
@@ -326,6 +329,9 @@ Multiplex.prototype._read = function () {
 }
 
 Multiplex.prototype._clear = function () {
+  if (this._finished) return
+  this._finished = true
+
   var list = this._local.concat(this._remote)
 
   this._local = []
@@ -336,6 +342,10 @@ Multiplex.prototype._clear = function () {
   })
 
   this.push(null)
+}
+
+Multiplex.prototype.finalize = function () {
+  this._clear()
 }
 
 Multiplex.prototype.destroy = function (err) {
