@@ -223,3 +223,23 @@ test('chunks', function (t) {
     }
   }
 })
+
+test('prefinish + corking', function (t) {
+  var plex = multiplex()
+  var async = false
+
+  plex.on('prefinish', function () {
+    plex.cork()
+    process.nextTick(function () {
+      async = true
+      plex.uncork()
+    })
+  })
+
+  plex.on('finish', function () {
+    t.ok(true, 'finished')
+    t.end()
+  })
+
+  plex.end()
+})

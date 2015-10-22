@@ -5,6 +5,8 @@ var xtend = require('xtend')
 var util = require('util')
 var duplexify = require('duplexify')
 
+var SIGNAL_FLUSH = new Buffer([0])
+
 var empty = new Buffer(0)
 var pool = new Buffer(10 * 1024)
 var used = 0
@@ -121,6 +123,7 @@ var Multiplex = function (opts, onchannel) {
   }
 
   this.destroyed = false
+  this._corked = 0
   this._options = opts || {}
   this._local = []
   this._remote = []
@@ -311,6 +314,8 @@ Multiplex.prototype._onchanneldrain = function (drained) {
 
 Multiplex.prototype._write = function (data, enc, cb) {
   if (this._finished) return cb()
+  if (this._corked) return this._onuncork(this._write.bind(this, data, enc, cb))
+  if (data === SIGNAL_FLUSH) return this._finish(cb)
 
   var offset = 0
 
@@ -322,6 +327,36 @@ Multiplex.prototype._write = function (data, enc, cb) {
 
   if (this._awaitChannelDrains) this._onwritedrain = cb
   else cb()
+}
+
+Multiplex.prototype._finish = function(cb) {
+  var self = this
+  this._onuncork(function () {
+    if (self._writableState.prefinished === false) self._writableState.prefinished = true
+    self.emit('prefinish')
+    self._onuncork(cb)
+  })
+}
+
+Multiplex.prototype.cork = function() {
+  if (++this._corked === 1) this.emit('cork')
+}
+
+Multiplex.prototype.uncork = function() {
+  if (this._corked && --this._corked === 0) this.emit('uncork')
+}
+
+Multiplex.prototype.end = function(data, enc, cb) {
+  if (typeof data === 'function') return this.end(null, null, data)
+  if (typeof enc === 'function') return this.end(data, null, enc)
+  if (data) this.write(data)
+  if (!this._writableState.ending) this.write(SIGNAL_FLUSH)
+  return stream.Writable.prototype.end.call(this, cb)
+}
+
+Multiplex.prototype._onuncork = function (fn) {
+  if (this._corked) this.once('uncork', fn)
+  else fn()
 }
 
 Multiplex.prototype._read = function () {
