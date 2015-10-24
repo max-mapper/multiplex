@@ -66,7 +66,9 @@ Channel.prototype._destroy = function (err, local) {
   this.emit('close')
   if (local && this._opened) {
     if (this._lazy && this.initiator) this._open()
-    this._multiplex._send(this.channel << 3 | (this.initiator ? 6 : 5), err ? new Buffer(err.message) : null)
+    try {
+      this._multiplex._send(this.channel << 3 | (this.initiator ? 6 : 5), err ? new Buffer(err.message) : null)
+    } catch (e) {}
   }
   this._finalize()
 }
