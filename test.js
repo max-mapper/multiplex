@@ -127,33 +127,33 @@ test('destroy', function (t) {
   stream1.destroy(new Error('0 had an error'))
 })
 
-// test('testing invalid data error', function (t) {
-//   var plex2 = multiplex()
-//   var s = streamifier.createReadStream(Array(50000).join('a'))
+test('testing invalid data error', function (t) {
+  var plex = multiplex()
 
-//   plex2.on('error', function (err){
-//     if (err) {
-//       t.equal(err.message, 'Invalid multiplex header received')
-//       t.end()
-//     }
-//   })
-//   // a really stupid thing to do
-//   s.pipe(plex2)
-// })
+  plex.on('error', function (err){
+    if (err) {
+      t.equal(err.message, 'Incoming message is too big')
+      t.end()
+    }
+  })
+  // a really stupid thing to do
+  plex.write(Array(50000).join('\xff'))
+})
 
-// test('overflow', function (t) {
-//   var plex2 = multiplex()
-//   var s = streamifier.createReadStream("abc")
+test('overflow', function (t) {
+  var plex1 = multiplex()
+  var plex2 = multiplex({limit: 10})
 
-//   plex2.on('error', function (err){
-//     if (err) {
-//       t.equal(err.message, 'Invalid data')
-//       t.end()
-//     }
-//   })
-//   //write more than the high water mark
-//   plex2.write(Array(50000).join('\xff'))
-// })
+  plex2.on('error', function (err){
+    if (err) {
+      t.equal(err.message, 'Incoming message is too big')
+      t.end()
+    }
+  })
+
+  plex1.pipe(plex2).pipe(plex1)
+  plex1.createStream().write(new Buffer(11))
+})
 
 test('2 buffers packed into 1 chunk', function (t) {
   var plex1 = multiplex()

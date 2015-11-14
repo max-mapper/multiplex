@@ -126,11 +126,14 @@ var Multiplex = function (opts, onchannel) {
     onchannel = opts
     opts = null
   }
+  if (!opts) opts = {}
 
   this.destroyed = false
+  this.limit = opts.limit || 0
+
   this._corked = 0
-  this._options = opts || {}
-  this._binaryName = !!this._options.binaryName
+  this._options = opts
+  this._binaryName = !!opts.binaryName
   this._local = []
   this._remote = []
   this._list = this._local
@@ -142,7 +145,7 @@ var Multiplex = function (opts, onchannel) {
   this._channel = 0
   this._missing = 0
   this._message = null
-  this._buf = new Buffer(100)
+  this._buf = new Buffer(this.limit ? varint.encodingLength(this.limit) : 100)
   this._ptr = 0
   this._awaitChannelDrains = 0
   this._onwritedrain = null
@@ -216,6 +219,7 @@ Multiplex.prototype._addChannel = function (channel, id, list) {
 
 Multiplex.prototype._writeVarint = function (data, offset) {
   for (offset; offset < data.length; offset++) {
+    if (this._ptr === this._buf.length) return this._lengthError(data)
     this._buf[this._ptr++] = data[offset]
     if (!(data[offset] & 0x80)) {
       if (this._state === 0) {
@@ -227,12 +231,18 @@ Multiplex.prototype._writeVarint = function (data, offset) {
         this._chunked = !!(this._type === 1 || this._type === 2) && chunked
       } else {
         this._missing = varint.decode(this._buf)
+        if (this.limit && this._missing > this.limit) return this._lengthError(data)
       }
       this._state++
       this._ptr = 0
       return offset + 1
     }
   }
+  return data.length
+}
+
+Multiplex.prototype._lengthError = function (data) {
+  this.destroy(new Error('Incoming message is too big'))
   return data.length
 }
 
