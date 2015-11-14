@@ -102,8 +102,11 @@ Channel.prototype._read = function () {
 }
 
 Channel.prototype._open = function () {
+  var buf = null
+  if (Buffer.isBuffer(this.name)) buf = this.name
+  else if (this.name !== this.channel.toString()) buf = new Buffer(this.name)
   this._lazy = false
-  this._multiplex._send(this.channel << 3 | 0, this.name !== this.channel.toString() ? new Buffer(this.name) : null)
+  this._multiplex._send(this.channel << 3 | 0, buf)
 }
 
 Channel.prototype.open = function (channel, initiator) {
@@ -127,10 +130,11 @@ var Multiplex = function (opts, onchannel) {
   this.destroyed = false
   this._corked = 0
   this._options = opts || {}
+  this._binaryName = !!this._options.binaryName
   this._local = []
   this._remote = []
   this._list = this._local
-  this._receiving = {}
+  this._receiving = null
   this._onchannel = onchannel
   this._chunked = false
   this._state = 0
@@ -154,21 +158,27 @@ Multiplex.prototype.createStream = function (name, opts) {
   if (this.destroyed) throw new Error('Multiplexer is destroyed')
   var id = this._local.indexOf(null)
   if (id === -1) id = this._local.push(null) - 1
-  var channel = new Channel(name || id.toString(), this, xtend(this._options, opts))
+  var channel = new Channel(this._name(name || id.toString()), this, xtend(this._options, opts))
   return this._addChannel(channel, id, this._local)
 }
 
 Multiplex.prototype.receiveStream = function (name, opts) {
   if (this.destroyed) throw new Error('Multiplexer is destroyed')
   if (name === undefined || name === null) throw new Error('Name is needed when receiving a stream')
-  if (this._receiving[name]) throw new Error('You are already receiving this stream')
-  var channel = new Channel(name.toString(), this, xtend(this._options, opts))
-  this._receiving[name] = channel
+  var channel = new Channel(this._name(name), this, xtend(this._options, opts))
+  if (!this._receiving) this._receiving = {}
+  if (this._receiving[channel.name]) throw new Error('You are already receiving this stream')
+  this._receiving[channel.name] = channel
   return channel
 }
 
 Multiplex.prototype.createSharedStream = function (name, opts) {
   return duplexify(this.createStream(name, xtend(opts, {lazy: true})), this.receiveStream(name, opts))
+}
+
+Multiplex.prototype._name = function (name) {
+  if (!this._binaryName) return name.toString()
+  return Buffer.isBuffer(name) ? name : new Buffer(name)
 }
 
 Multiplex.prototype._send = function (header, data) {
@@ -268,10 +278,10 @@ Multiplex.prototype._push = function (data) {
   if (this._type === 0) { // open
     if (this.destroyed || this._finished) return
 
-    var name = data.toString() || this._channel.toString()
+    var name = this._binaryName ? data : (data.toString() || this._channel.toString())
     var channel
 
-    if (this._receiving[name]) {
+    if (this._receiving && this._receiving[name]) {
       channel = this._receiving[name]
       delete this._receiving[name]
       this._addChannel(channel, this._channel, this._list)
