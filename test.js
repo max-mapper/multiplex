@@ -237,7 +237,7 @@ test('prefinish + corking', function (t) {
   })
 
   plex.on('finish', function () {
-    t.ok(true, 'finished')
+    t.ok(async, 'finished')
     t.end()
   })
 
