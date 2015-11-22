@@ -351,7 +351,7 @@ Multiplex.prototype._write = function (data, enc, cb) {
   else cb()
 }
 
-Multiplex.prototype._finish = function(cb) {
+Multiplex.prototype._finish = function (cb) {
   var self = this
   this._onuncork(function () {
     if (self._writableState.prefinished === false) self._writableState.prefinished = true
@@ -360,15 +360,15 @@ Multiplex.prototype._finish = function(cb) {
   })
 }
 
-Multiplex.prototype.cork = function() {
+Multiplex.prototype.cork = function () {
   if (++this._corked === 1) this.emit('cork')
 }
 
-Multiplex.prototype.uncork = function() {
+Multiplex.prototype.uncork = function () {
   if (this._corked && --this._corked === 0) this.emit('uncork')
 }
 
-Multiplex.prototype.end = function(data, enc, cb) {
+Multiplex.prototype.end = function (data, enc, cb) {
   if (typeof data === 'function') return this.end(null, null, data)
   if (typeof enc === 'function') return this.end(data, null, enc)
   if (data) this.write(data)

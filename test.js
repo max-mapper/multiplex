@@ -130,7 +130,7 @@ test('destroy', function (t) {
 test('testing invalid data error', function (t) {
   var plex = multiplex()
 
-  plex.on('error', function (err){
+  plex.on('error', function (err) {
     if (err) {
       t.equal(err.message, 'Incoming message is too big')
       t.end()
@@ -144,7 +144,7 @@ test('overflow', function (t) {
   var plex1 = multiplex()
   var plex2 = multiplex({limit: 10})
 
-  plex2.on('error', function (err){
+  plex2.on('error', function (err) {
     if (err) {
       t.equal(err.message, 'Incoming message is too big')
       t.end()
