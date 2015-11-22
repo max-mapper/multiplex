@@ -243,3 +243,20 @@ test('prefinish + corking', function (t) {
 
   plex.end()
 })
+
+test('quick message', function (t) {
+  var plex2 = multiplex()
+  var plex1 = multiplex(function (stream) {
+    stream.write('hello world')
+  })
+
+  plex1.pipe(plex2).pipe(plex1)
+
+  setTimeout(function () {
+    var stream = plex2.createStream()
+    stream.on('data', function (data) {
+      t.same(data, new Buffer('hello world'))
+      t.end()
+    })
+  }, 100)
+})

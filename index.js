@@ -206,13 +206,13 @@ Multiplex.prototype._send = function (header, data) {
 }
 
 Multiplex.prototype._addChannel = function (channel, id, list) {
-  channel.open(id, list === this._local)
-
   while (list.length <= id) list.push(null)
   list[id] = channel
   channel.on('finalize', function () {
     list[id] = null
   })
+
+  channel.open(id, list === this._local)
 
   return channel
 }
