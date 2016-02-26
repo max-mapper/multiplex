@@ -2,7 +2,7 @@ var stream = require('readable-stream')
 var varint = require('varint')
 var EventEmitter = require('events').EventEmitter
 var xtend = require('xtend')
-var util = require('util')
+var inherits = require('inherits')
 var duplexify = require('duplexify')
 
 var SIGNAL_FLUSH = new Buffer([0])
@@ -53,7 +53,7 @@ var Channel = function (name, plex, opts) {
   })
 }
 
-util.inherits(Channel, stream.Duplex)
+inherits(Channel, stream.Duplex)
 
 Channel.prototype.destroy = function (err) {
   this._destroy(err, true)
@@ -155,7 +155,7 @@ var Multiplex = function (opts, onchannel) {
   this.on('finish', this._clear)
 }
 
-util.inherits(Multiplex, stream.Duplex)
+inherits(Multiplex, stream.Duplex)
 
 Multiplex.prototype.createStream = function (name, opts) {
   if (this.destroyed) throw new Error('Multiplexer is destroyed')
