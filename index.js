@@ -127,6 +127,7 @@ var Multiplex = function (opts, onchannel) {
     opts = null
   }
   if (!opts) opts = {}
+  if (!onchannel) onchannel = function noop () {}
 
   this.destroyed = false
   this.limit = opts.limit || 0
@@ -297,6 +298,7 @@ Multiplex.prototype._push = function (data) {
       this._addChannel(channel, this._channel, this._list)
     } else if (this._onchannel) {
       channel = new Channel(name, this, this._options)
+      this.emit('stream', channel, channel.name)
       this._onchannel(this._addChannel(channel, this._channel, this._list), channel.name)
     }
     return

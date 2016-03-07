@@ -260,3 +260,24 @@ test('quick message', function (t) {
     })
   }, 100)
 })
+
+test('if onstream is not passed, stream is emitted', function (t) {
+  var plex1 = multiplex()
+  var plex2 = multiplex()
+
+  plex1.pipe(plex2).pipe(plex1)
+
+  plex2.on('stream', function (stream, id) {
+    t.ok(stream, 'received stream')
+    t.ok(id, 'has id')
+    stream.write('hello world')
+    stream.end()
+  })
+
+  var stream = plex1.createStream()
+  stream.on('data', function (data) {
+    t.same(data, new Buffer('hello world'))
+    stream.end()
+    t.end()
+  })
+})
