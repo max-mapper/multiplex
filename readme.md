@@ -47,6 +47,10 @@ the same id, writing data on one end will emit the same data on the other end
 
 Emitted when the outer stream encounters invalid data
 
+### `multiplex.on('stream', function (stream, id) {})`
+
+Emitted when a it a new stream arrives.
+
 ### `stream.on('error', function (err) {})`
 
 Emitted if the inner stream is destroyed with an error
