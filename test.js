@@ -4,6 +4,7 @@ var through = require('through2')
 var multiplex = require('./')
 var net = require('net')
 var chunky = require('chunky')
+var pump = require('pump')
 
 test('one way piping work with 2 sub-streams', function (t) {
   var plex1 = multiplex()
@@ -141,18 +142,27 @@ test('testing invalid data error', function (t) {
 })
 
 test('overflow', function (t) {
+  t.plan(2)
   var plex1 = multiplex()
   var plex2 = multiplex({limit: 10})
+
+  plex2.on('stream', function (stream) {
+    stream.on('error', function (err) {
+      t.equal(err.message, 'Incoming message is too big')
+    })
+  })
 
   plex2.on('error', function (err) {
     if (err) {
       t.equal(err.message, 'Incoming message is too big')
-      t.end()
     }
   })
 
   plex1.pipe(plex2).pipe(plex1)
-  plex1.createStream().write(new Buffer(11))
+
+  var stream = plex1.createStream()
+
+  stream.write(new Buffer(11))
 })
 
 test('2 buffers packed into 1 chunk', function (t) {
@@ -281,3 +291,48 @@ test('if onstream is not passed, stream is emitted', function (t) {
     t.end()
   })
 })
+
+test('underlying error is propagated to muxed streams', function (t) {
+  t.plan(4)
+  var plex1 = multiplex()
+  var plex2 = multiplex()
+
+  var socket
+
+  plex2.on('stream', function (stream) {
+    stream.on('error', function (err) {
+      t.ok(err)
+    })
+
+    stream.on('close', function () {
+      t.pass()
+    })
+
+    socket.destroy()
+  })
+
+  var stream1to2 = plex1.createStream(1337)
+
+  stream1to2.on('error', function (err) {
+    t.ok(err)
+  })
+
+  stream1to2.on('close', function () {
+    t.pass()
+  })
+
+  var server = net.createServer(function (stream) {
+    pump(plex2, stream)
+    pump(stream, plex2)
+    server.close()
+  })
+
+  server.listen(0, function () {
+    var port = server.address().port
+    socket = net.connect(port)
+
+    pump(plex1, socket)
+    pump(socket, plex1)
+  })
+})
+
