@@ -407,10 +407,21 @@ Multiplex.prototype.finalize = function () {
 
 Multiplex.prototype.destroy = function (err) {
   if (this.destroyed) return
+
+  var list = this._local.concat(this._remote)
+
   this.destroyed = true
-  this._clear()
+
   if (err) this.emit('error', err)
   this.emit('close')
+
+  list.forEach(function (stream) {
+    if (stream) {
+      stream.emit('error', err || new Error('underlying socket has been closed'))
+    }
+  })
+
+  this._clear()
 }
 
 module.exports = Multiplex
