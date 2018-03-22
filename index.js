@@ -4,11 +4,13 @@ var EventEmitter = require('events').EventEmitter
 var xtend = require('xtend')
 var inherits = require('inherits')
 var duplexify = require('duplexify')
+var bufferAlloc = require('buffer-alloc')
+var bufferFrom = require('buffer-from')
 
-var SIGNAL_FLUSH = new Buffer([0])
+var SIGNAL_FLUSH = bufferAlloc(1)
 
-var empty = new Buffer(0)
-var pool = new Buffer(10 * 1024)
+var empty = bufferAlloc(0)
+var pool = bufferAlloc(10 * 1024)
 var used = 0
 
 var Channel = function (name, plex, opts) {
@@ -67,7 +69,7 @@ Channel.prototype._destroy = function (err, local) {
   if (local && this._opened) {
     if (this._lazy && this.initiator) this._open()
     try {
-      this._multiplex._send(this.channel << 3 | (this.initiator ? 6 : 5), err ? new Buffer(err.message) : null)
+      this._multiplex._send(this.channel << 3 | (this.initiator ? 6 : 5), err ? bufferFrom(err.message) : null)
     } catch (e) {}
   }
   this._finalize()
@@ -104,7 +106,7 @@ Channel.prototype._read = function () {
 Channel.prototype._open = function () {
   var buf = null
   if (Buffer.isBuffer(this.name)) buf = this.name
-  else if (this.name !== this.channel.toString()) buf = new Buffer(this.name)
+  else if (this.name !== this.channel.toString()) buf = bufferFrom(this.name)
   this._lazy = false
   this._multiplex._send(this.channel << 3 | 0, buf)
 }
@@ -145,7 +147,7 @@ var Multiplex = function (opts, onchannel) {
   this._channel = 0
   this._missing = 0
   this._message = null
-  this._buf = new Buffer(this.limit ? varint.encodingLength(this.limit) : 100)
+  this._buf = bufferAlloc(this.limit ? varint.encodingLength(this.limit) : 100)
   this._ptr = 0
   this._awaitChannelDrains = 0
   this._onwritedrain = null
@@ -181,7 +183,7 @@ Multiplex.prototype.createSharedStream = function (name, opts) {
 
 Multiplex.prototype._name = function (name) {
   if (!this._binaryName) return name.toString()
-  return Buffer.isBuffer(name) ? name : new Buffer(name)
+  return Buffer.isBuffer(name) ? name : bufferFrom(name)
 }
 
 Multiplex.prototype._send = function (header, data) {
@@ -197,7 +199,7 @@ Multiplex.prototype._send = function (header, data) {
   drained = this.push(pool.slice(oldUsed, used))
 
   if (pool.length - used < 100) {
-    pool = new Buffer(10 * 1024)
+    pool = bufferAlloc(10 * 1024)
     used = 0
   }
 
@@ -261,7 +263,7 @@ Multiplex.prototype._writeMessage = function (data, offset) {
       this._push(data.slice(offset, data.length))
       return data.length
     }
-    this._message = new Buffer(missing)
+    this._message = bufferAlloc(missing)
   }
 
   data.copy(this._message, this._ptr, offset, offset + missing)

@@ -71,8 +71,8 @@ var plex2 = multiplex(function onStream(stream, id) {
 
 plex1.pipe(plex2)
 
-stream1.write(new Buffer('stream one!'))
-stream2.write(new Buffer('stream two!'))
+stream1.write(Buffer.from('stream one!'))
+stream2.write(Buffer.from('stream two!'))
 ```
 
 ### contributing

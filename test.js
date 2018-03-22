@@ -4,6 +4,8 @@ var through = require('through2')
 var multiplex = require('./')
 var net = require('net')
 var chunky = require('chunky')
+var bufferFrom = require('buffer-from')
+var bufferAlloc = require('buffer-alloc')
 
 test('one way piping work with 2 sub-streams', function (t) {
   var plex1 = multiplex()
@@ -16,8 +18,8 @@ test('one way piping work with 2 sub-streams', function (t) {
 
   plex1.pipe(plex2)
 
-  stream1.write(new Buffer('hello'))
-  stream2.write(new Buffer('world'))
+  stream1.write(bufferFrom('hello'))
+  stream2.write(bufferFrom('world'))
   stream1.end()
   stream2.end()
 
@@ -42,7 +44,7 @@ test('two way piping works with 2 sub-streams', function (t) {
 
   var plex2 = multiplex(function onStream (stream, id) {
     var uppercaser = through(function (chunk, e, done) {
-      this.push(new Buffer(chunk.toString().toUpperCase()))
+      this.push(bufferFrom(chunk.toString().toUpperCase()))
       this.end()
       done()
     })
@@ -57,8 +59,8 @@ test('two way piping works with 2 sub-streams', function (t) {
   stream1.pipe(collect())
   stream2.pipe(collect())
 
-  stream1.write(new Buffer('hello'))
-  stream2.write(new Buffer('world'))
+  stream1.write(bufferFrom('hello'))
+  stream2.write(bufferFrom('world'))
 
   var pending = 2
   var results = []
@@ -89,7 +91,7 @@ test('stream id should be exposed as stream.name', function (t) {
 
   plex1.pipe(plex2)
 
-  stream1.write(new Buffer('hello'))
+  stream1.write(bufferFrom('hello'))
   stream1.end()
 })
 
@@ -106,7 +108,7 @@ test('stream id can be a long string', function (t) {
 
   plex1.pipe(plex2)
 
-  stream1.write(new Buffer('hello'))
+  stream1.write(bufferFrom('hello'))
   stream1.end()
 })
 
@@ -123,7 +125,7 @@ test('destroy', function (t) {
 
   plex1.pipe(plex2)
 
-  stream1.write(new Buffer('hello'))
+  stream1.write(bufferFrom('hello'))
   stream1.destroy(new Error('0 had an error'))
 })
 
@@ -152,7 +154,7 @@ test('overflow', function (t) {
   })
 
   plex1.pipe(plex2).pipe(plex1)
-  plex1.createStream().write(new Buffer(11))
+  plex1.createStream().write(bufferAlloc(11))
 })
 
 test('2 buffers packed into 1 chunk', function (t) {
@@ -200,8 +202,8 @@ test('chunks', function (t) {
       next()
     })).pipe(plex2)
 
-    stream1.write(new Buffer('hello'))
-    stream2.write(new Buffer('world'))
+    stream1.write(bufferFrom('hello'))
+    stream2.write(bufferFrom('world'))
     stream1.end()
     stream2.end()
   })()
@@ -255,7 +257,7 @@ test('quick message', function (t) {
   setTimeout(function () {
     var stream = plex2.createStream()
     stream.on('data', function (data) {
-      t.same(data, new Buffer('hello world'))
+      t.same(data, bufferFrom('hello world'))
       t.end()
     })
   }, 100)
@@ -276,7 +278,7 @@ test('if onstream is not passed, stream is emitted', function (t) {
 
   var stream = plex1.createStream()
   stream.on('data', function (data) {
-    t.same(data, new Buffer('hello world'))
+    t.same(data, bufferFrom('hello world'))
     stream.end()
     t.end()
   })
