@@ -1,4 +1,5 @@
 var multiplex = require('./')
+var bufferAlloc = require('buffer-alloc');
 var time = Date.now()
 
 var plex = multiplex(function (stream, name) {
@@ -8,7 +9,7 @@ var plex = multiplex(function (stream, name) {
 plex.pipe(plex)
 
 var stream = plex.createStream()
-var hello = new Buffer(16 * 1024 - 1)
+var hello = bufferAlloc(16 * 1024 - 1)
 var sent = 100000
 var rcvd = 0
 
