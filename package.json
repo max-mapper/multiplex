@@ -11,7 +11,7 @@
     "Ayman Mackouly <ayman.mackouly@gmail.com> (https://github.com/1N50MN14/)"
   ],
   "author": "max ogden",
-  "license": "BSD 2-Clause",
+  "license": "BSD-2-Clause",
   "dependencies": {
     "duplexify": "^3.4.2",
     "inherits": "^2.0.1",
